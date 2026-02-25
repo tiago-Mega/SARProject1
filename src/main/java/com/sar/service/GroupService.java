@@ -1,5 +1,5 @@
 // com.sar.service.GroupService.java
-package com.service;
+package com.sar.service;
 
 import com.sar.model.Group;
 import java.util.List;
@@ -17,4 +17,3 @@ public interface GroupService {
  String generateGroupHtml(); // Generates HTML table of all groups
  boolean groupExists(String groupNumber);
 }
-

@@ -2,6 +2,7 @@ package com.sar.controller;
 
 import com.sar.web.handler.AbstractRequestHandler;
 import com.sar.web.handler.ApiHandler;
+import com.sar.web.handler.EventHandler;
 import com.sar.web.handler.StaticFileHandler;
 import com.sar.web.http.Request;
 import com.sar.web.http.Response;
@@ -12,19 +13,38 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * HttpController routes incoming HTTP requests to the appropriate handlers.
+ * 
+ * Routing Strategy:
+ * The controller maintains a map of endpoint names to handler instances.
+ * When a request arrives, it extracts the endpoint from the URL and matches it
+ * against registered handlers. If no match is found, it falls back to the
+ * StaticFileHandler to serve static content.
+ * 
+ * Handler Registration:
+ * Handlers are registered during initialization in Main.java via dependency injection.
+ * Each handler extends AbstractRequestHandler and implements specific request logic.
+ * 
+ * Examples:
+ * - /api or /sarAPI → ApiHandler
+ * - /events → EventHandler (for SSE)
+ * - /index.html → StaticFileHandler (default)
+ */
 public class HttpController {
     private static final Logger logger = LoggerFactory.getLogger(HttpController.class);
     
     private final Map<String, AbstractRequestHandler> handlers;
     private final StaticFileHandler defaultHandler;
 
-    public HttpController(ApiHandler apiHandler, StaticFileHandler staticFileHandler) {
+    public HttpController(ApiHandler apiHandler, EventHandler eventHandler, StaticFileHandler staticFileHandler) {
         this.handlers = new HashMap<>();
         this.defaultHandler = staticFileHandler;
         
         // Register handlers for different endpoints
-        // You can register other handlers here for example for re-direction or simple authentication
+        // Each handler is responsible for a specific URL pattern or functionality
         registerHandler("api", apiHandler);
+        registerHandler("events", eventHandler);
     }
 
     /**

@@ -6,9 +6,11 @@ import com.sar.controller.HttpController;
 //imports of the required classes for database operations
 import com.sar.repository.GroupRepository;
 import com.sar.repository.MongoGroupRepository;
-import com.service.GroupService;
-import com.service.GroupServiceImpl;
+import com.sar.service.GroupService;
+import com.sar.service.GroupServiceImpl;
+import com.sar.service.EventBroadcaster;
 import com.sar.web.handler.ApiHandler;
+import com.sar.web.handler.EventHandler;
 import com.sar.web.handler.StaticFileHandler;
 
 //imports of the required classes for the server
@@ -49,7 +51,9 @@ public class Main {
     private final MongoClient mongoClient;
     private final GroupRepository groupRepository;
     private final GroupService groupService;
+    private final EventBroadcaster eventBroadcaster;
     private final ApiHandler apiHandler;
+    private final EventHandler eventHandler;
     private final StaticFileHandler staticFileHandler;
     private final HttpController httpController;
     
@@ -75,15 +79,21 @@ public class Main {
         logger.info("Initializing Group Service...");
         this.groupService = initializeGroupService(this.groupRepository);
 
-        // 4. Initialize Handlers   
+        // 4. Initialize EventBroadcaster for SSE
+        logger.info("Initializing Event Broadcaster...");
+        this.eventBroadcaster = initializeEventBroadcaster();
+
+        // 5. Initialize Handlers   
         logger.info("Initializing Static File Handler...");
         this.staticFileHandler = initializestaticFileHandler(StaticFiles, HOMEFILENAME);
         logger.info("Initializing API Handler...");
         this.apiHandler = initializeApiHandler(this.groupService);
+        logger.info("Initializing Event Handler...");
+        this.eventHandler = initializeEventHandler(this.eventBroadcaster);
 
-        //5. Initialize Controller
+        // 6. Initialize Controller
         logger.info("Initializing HTTP Controller...");
-        this.httpController = initializeHttpController(this.apiHandler, this.staticFileHandler);
+        this.httpController = initializeHttpController(this.apiHandler, this.eventHandler, this.staticFileHandler);
         logger.info("All components initialized successfully");
    
     } catch (Exception e) {
@@ -123,12 +133,30 @@ public class Main {
         }
     }
 
+    private EventBroadcaster initializeEventBroadcaster() {
+        try {
+            return new EventBroadcaster();
+        } catch (Exception e) {
+            logger.error("Failed to initialize Event Broadcaster", e);
+            throw new RuntimeException("Event Broadcaster initialization failed", e);
+        }
+    }
+
     private ApiHandler initializeApiHandler(GroupService service) {
         try {
             return new ApiHandler(service);
         } catch (Exception e) {
             logger.error("Failed to initialize API Handler", e);
             throw new RuntimeException("Handler initialization failed", e);
+        }
+    }
+
+    private EventHandler initializeEventHandler(EventBroadcaster eventBroadcaster) {
+        try {
+            return new EventHandler(eventBroadcaster);
+        } catch (Exception e) {
+            logger.error("Failed to initialize Event Handler", e);
+            throw new RuntimeException("Event Handler initialization failed", e);
         }
     }
 
@@ -141,9 +169,9 @@ public class Main {
         }
     }
 
-    private HttpController initializeHttpController(ApiHandler apiHandler, StaticFileHandler staticFileHandler) {
+    private HttpController initializeHttpController(ApiHandler apiHandler, EventHandler eventHandler, StaticFileHandler staticFileHandler) {
         try {
-            return new HttpController(apiHandler, staticFileHandler);
+            return new HttpController(apiHandler, eventHandler, staticFileHandler);
         } catch (Exception e) {
             logger.error("Failed to initialize HTTP Controller", e);
             throw new RuntimeException("Controller initialization failed", e);
