@@ -8,9 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Server Thread
- * @author pedroamaral
- */
+* Server Thread
+* @author pedroamaral
+*/
 public class ServerThread extends Thread {
     private static final Logger logger = LoggerFactory.getLogger(ServerThread.class);
     private final Main httpServer;
@@ -24,38 +24,36 @@ public class ServerThread extends Thread {
         setPriority(NORM_PRIORITY - 1);
     }
         
-        public void wake_up () {
-            this.interrupt ();
-        }
+    public void wake_up () {
+        this.interrupt ();
+    }
         
-        public void stop_thread () {
-            httpServer.thread_ended();
-            this.interrupt ();
-        }
+    public void stop_thread () {
+        httpServer.thread_ended();
+        this.interrupt ();
+    }
+       
+    @Override
+    public void run () {
+        logger.info ( "Server at port "+serverSock.getLocalPort ()+"\n"+ " started!");
         
-        @Override
-        public void run () {
-            logger.info (
-                    "Server at port "+serverSock.getLocalPort ()+"\n"+ " started!");
-            while ( true ) {
-                try {
-                    Socket client = serverSock.accept();
-                    httpServer.thread_started();
-                    
-                    // Create and start connection thread
-                    ConnectionThread t = new ConnectionThread(
-                        httpServer, 
-                        serverSock, 
-                        client, 
-                        httpController
-                    );
-                    t.start();
-                } catch (IOException e) {
-                    if (httpServer.active()) {
-                        logger.error("Server thread IO error", e);
-                    }
-                    break;
-                }
+        while ( true ) {
+            try {
+                Socket client = serverSock.accept();
+                httpServer.thread_started();
+                   
+                // Create and start connection thread
+                ConnectionThread t = new ConnectionThread(
+                    httpServer, 
+                    serverSock, 
+                    client, 
+                    httpController
+                );
+                t.start();
+            } catch (IOException e) {
+                if (httpServer.active()) logger.error("Server thread IO error", e);
+                break;
             }
         }
+    }
 }

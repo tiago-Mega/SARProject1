@@ -17,7 +17,7 @@ public class ReplyCode {
     private String version;
     
     
-    /** Default constructor */
+    /* Default constructor */
     public ReplyCode() {
         code= NOTDEFINED;
         codeTxt= null;
@@ -44,11 +44,14 @@ public class ReplyCode {
         this.code= code; 
         this.codeTxt= codeText(code); 
     }
+    
     /** Overwrites default code text
-     * @param codeTxt */
+    * @param codeTxt
+    */
     public void setCodeTxt(String codeTxt) { 
         this.codeTxt= codeTxt; 
     }
+
     public void setVersion(String version) {
         this.version= version;
     }
@@ -66,7 +69,7 @@ public class ReplyCode {
         return version+" "+code+" "+codeTxt;
     }
     
-    /** Auxiliary function that returns the default code text */
+    /* Auxiliary function that returns the default code text */
     public static String codeText (int code) {
         switch (code) {
             case OK:

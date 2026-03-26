@@ -11,29 +11,29 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * GroupServiceImpl implements business logic for group management.
- * 
- * Service Layer Responsibilities:
- * - Input validation and business rule enforcement
- * - Orchestrating repository calls
- * - Error handling and logging
- * - Data transformation (e.g., generating HTML representations)
- * 
- * Event Broadcasting Integration Point:
- * When groups are created, updated, or deleted, the EventBroadcaster service
- * should be notified to push real-time updates to connected SSE clients.
- * 
- * To integrate SSE:
- * 1. Inject EventBroadcaster via constructor (similar to GroupRepository)
- * 2. Call eventBroadcaster.broadcast() after successful database operations
- * 3. Format event data appropriately (e.g., JSON with event type and group data)
- * 
- * Example event types:
- * - "group.created" when saveGroup() creates a new group
- * - "group.updated" when saveGroup() updates an existing group
- * - "group.deleted" when deleteGroup() removes a group
- * - "group.accessed" when incrementAccessCount() is called
- */
+* GroupServiceImpl implements business logic for group management.
+* 
+* Service Layer Responsibilities:
+* - Input validation and business rule enforcement
+* - Orchestrating repository calls
+* - Error handling and logging
+* - Data transformation (e.g., generating HTML representations)
+* 
+* Event Broadcasting Integration Point:
+* When groups are created, updated, or deleted, the EventBroadcaster service
+* should be notified to push real-time updates to connected SSE clients.
+* 
+* To integrate SSE:
+* 1. Inject EventBroadcaster via constructor (similar to GroupRepository)
+* 2. Call eventBroadcaster.broadcast() after successful database operations
+* 3. Format event data appropriately (e.g., JSON with event type and group data)
+* 
+* Example event types:
+* - "group.created" when saveGroup() creates a new group
+* - "group.updated" when saveGroup() updates an existing group
+* - "group.deleted" when deleteGroup() removes a group
+* - "group.accessed" when incrementAccessCount() is called
+*/
 public class GroupServiceImpl implements GroupService {
     private static final Logger logger = LoggerFactory.getLogger(GroupServiceImpl.class);
     private final GroupRepository repository;
@@ -55,8 +55,7 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public Group getGroup(String groupNumber) {
         try {
-            return repository.findByGroupNumber(groupNumber)
-                .orElseThrow(() -> new RuntimeException("Group not found: " + groupNumber));
+            return repository.findByGroupNumber(groupNumber).orElseThrow(() -> new RuntimeException("Group not found: " + groupNumber));
         } catch (Exception e) {
             logger.error("Error getting group: " + groupNumber, e);
             throw new RuntimeException("Failed to retrieve group", e);
@@ -78,8 +77,7 @@ public class GroupServiceImpl implements GroupService {
             boolean isNewGroup = !repository.findByGroupNumber(groupNumber).isPresent();
 
             // Create or update group
-            Group group = repository.findByGroupNumber(groupNumber)
-                .orElse(new Group());
+            Group group = repository.findByGroupNumber(groupNumber).orElse(new Group());
 
             group.setGroupNumber(groupNumber);
             group.setCounter(counter);

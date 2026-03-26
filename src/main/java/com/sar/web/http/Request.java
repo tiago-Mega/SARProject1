@@ -7,12 +7,12 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- *
- * @author pedroamaral 
- * 
- * Class that stores all information about a HTTP request
- * Incomplete Version 24/25
- */
+*
+* @author pedroamaral 
+* 
+* Class that stores all information about a HTTP request
+* Incomplete Version 24/25
+*/
 public class Request {
     private static final Logger logger = LoggerFactory.getLogger(Request.class);
 
@@ -28,12 +28,13 @@ public class Request {
     public String version;
     public String method;
     public String urlText;
+
     /** 
-     * Creates a new instance of HTTPQuery
-     * @param _UserInterface   log object
-     * @param id    log id
-     * @param LocalPort local HTTP server port
-     */
+    * Creates a new instance of HTTPQuery
+    * @param _UserInterface   log object
+    * @param id    log id
+    * @param LocalPort local HTTP server port
+    */
     public Request(String clientAddress, int clientPort, int serverPort) {
         this.clientAddress = clientAddress;
         this.clientPort = clientPort;
@@ -43,12 +44,12 @@ public class Request {
         this.postParameters = new Properties();
     }
 
-    //Method to getClienAddress
+    // Method to getClienAddress
     public String getClientAddress() {
         return clientAddress;
     }
 
-    //Method to getClientPort
+    // Method to getClientPort
     public int getClientPort() {
         return clientPort;
     }
@@ -66,26 +67,26 @@ public class Request {
         }
     }
 
-     /**
-     * Get a header property value
-     * @param hdrName   header name
-     * @return          header value
-     */
+    /**
+    * Get a header property value
+    * @param hdrName   header name
+    * @return          header value
+    */
     public String getHeaderValue(String hdrName) {
         return headers.getHeaderValue(hdrName);
     }
     
     /**
-     * Set a header property value
-     * @param hdrName   header name
-     * @param hdrVal    header value
-     */
+    * Set a header property value
+    * @param hdrName   header name
+    * @param hdrVal    header value
+    */
     public void setHeader(String hdrName, String hdrVal) {
         headers.setHeader(hdrName, hdrVal);
     }
 
     
-    /** Returns the Cookie Properties object */
+    /* Returns the Cookie Properties object */
     public Properties getCookies () {
         return this.cookies;
     }
@@ -95,10 +96,10 @@ public class Request {
     }
     
     /**
-     * Remove a header property name
-     * @param hdrName   header name
-     * @return true if successful
-     */
+    * Remove a header property name
+    * @param hdrName   header name
+    * @return true if successful
+    */
     public boolean removeHeader(String hdrName) {
         return headers.removeHeader(hdrName);
     } 

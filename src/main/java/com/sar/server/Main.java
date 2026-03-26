@@ -30,7 +30,7 @@ public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
    
     //Static configuration
-    public final String ServerName= "SAR Server by ----/-----";
+    public final String ServerName= "SAR Server by Tiago Mega nº:58114";
     public final static String StaticFiles = "html";
     public final static String HOMEFILENAME = "index.htm";
     //Keep alive settings
@@ -64,7 +64,7 @@ public class Main {
     private SSLServerSocket serverS;
     private int n_threads=0;
     
-   public Main() {
+    public Main() {
        // Initialize components in proper order
        try {
         // 1. Initialize MongoDB connection
@@ -96,14 +96,14 @@ public class Main {
         this.httpController = initializeHttpController(this.apiHandler, this.eventHandler, this.staticFileHandler);
         logger.info("All components initialized successfully");
    
-    } catch (Exception e) {
-        logger.error("Failed to initialize application components", e);
-        throw new RuntimeException("Application initialization failed", e);
-    }
+        } catch (Exception e) {
+            logger.error("Failed to initialize application components", e);
+            throw new RuntimeException("Application initialization failed", e);
+        }
     }
 
-     // Component initialization methods
-     private MongoClient initializeMongoClient() {
+    // Component initialization methods
+    private MongoClient initializeMongoClient() {
         try {
             if (!MongoConfig.testConnection()) {
                 throw new RuntimeException("MongoDB connection test failed");
@@ -222,8 +222,8 @@ public class Main {
         }
     }
     
-     // Getter methods
-     public int getPortHTTP() {
+    // Getter methods
+    public int getPortHTTP() {
         return HTTPport;
     }
 
@@ -267,16 +267,15 @@ public class Main {
     }
 
     /** Open up the KeyStore to obtain the Trusted Certificates.
-     *  KeyStore is of type "JKS". Filename is "serverAppKeys.jks"
-     *  and password is "myKeys".
-     */
+    *  KeyStore is of type "JKS". Filename is "serverAppKeys.jks"
+    *  and password is "myKeys".
+    */
     private static void initContext() throws Exception {
-        if (sslContext != null)
-            return;
+        if (sslContext != null) return;
         
         try {
-            // MAke sure that JSSE is available
-           // Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
+            // Make sure the JSSE provider is registered.
+            // Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
             
             // Create/initialize the SSLContext with key material
             char[] passphrase = "password".toCharArray(); // if the certificate was created with the password = "password"
@@ -300,8 +299,7 @@ public class Main {
             
             
             sslContext = SSLContext.getInstance("TLSv1.2"); 
-            sslContext.init(
-                    kmf.getKeyManagers(), null /*tmf.getTrustManagers()*/, null);
+            sslContext.init(kmf.getKeyManagers(), null /*tmf.getTrustManagers()*/, null);
             
         } catch (Exception e) {
             System.out.println("Failed to read keystore and trustfile.");

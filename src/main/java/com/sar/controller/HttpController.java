@@ -14,23 +14,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * HttpController routes incoming HTTP requests to the appropriate handlers.
- * 
- * Routing Strategy:
- * The controller maintains a map of endpoint names to handler instances.
- * When a request arrives, it extracts the endpoint from the URL and matches it
- * against registered handlers. If no match is found, it falls back to the
- * StaticFileHandler to serve static content.
- * 
- * Handler Registration:
- * Handlers are registered during initialization in Main.java via dependency injection.
- * Each handler extends AbstractRequestHandler and implements specific request logic.
- * 
- * Examples:
- * - /api or /sarAPI → ApiHandler
- * - /events → EventHandler (for SSE)
- * - /index.html → StaticFileHandler (default)
- */
+* HttpController routes incoming HTTP requests to the appropriate handlers.
+* 
+* Routing Strategy:
+* The controller maintains a map of endpoint names to handler instances.
+* When a request arrives, it extracts the endpoint from the URL and matches it
+* against registered handlers. If no match is found, it falls back to the
+* StaticFileHandler to serve static content.
+* 
+* Handler Registration:
+* Handlers are registered during initialization in Main.java via dependency injection.
+* Each handler extends AbstractRequestHandler and implements specific request logic.
+* 
+* Examples:
+* - /api or /sarAPI → ApiHandler
+* - /events → EventHandler (for SSE)
+* - /index.html → StaticFileHandler (default)
+*/
 public class HttpController {
     private static final Logger logger = LoggerFactory.getLogger(HttpController.class);
     
@@ -48,16 +48,16 @@ public class HttpController {
     }
 
     /**
-     * Registers a handler for a specific endpoint
-     */
+    * Registers a handler for a specific endpoint
+    */
     public void registerHandler(String endpoint, AbstractRequestHandler handler) {
         handlers.put(endpoint.toLowerCase(), handler);
         logger.info("Registered handler for endpoint: {}", endpoint);
     }
 
     /**
-     * Routes and handles the request
-     */
+    * Routes and handles the request
+    */
     public void handleRequest(Request request, Response response) {
         try {
             //Check if request is null
@@ -65,6 +65,7 @@ public class HttpController {
                 response.setError(ReplyCode.BADREQ,"HTTP/1.1");
                 return;
             }
+    
             // Normalize URL
             String url = request.urlText.toLowerCase();
             while (url.startsWith("/")) {

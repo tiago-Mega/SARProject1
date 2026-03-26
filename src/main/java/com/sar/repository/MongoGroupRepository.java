@@ -24,9 +24,7 @@ public class MongoGroupRepository implements GroupRepository {
 
     public MongoGroupRepository(MongoClient mongoClient) {
         // Get the groups collection from MongoDB
-        this.collection = mongoClient
-            .getDatabase("sardb")
-            .getCollection("groups");
+        this.collection = mongoClient.getDatabase("sardb").getCollection("groups");
     }
 
     @Override
@@ -34,8 +32,7 @@ public class MongoGroupRepository implements GroupRepository {
         List<Group> groups = new ArrayList<>();
         try {
             // Find all documents and convert each to a Group object
-            collection.find().forEach(doc -> 
-                groups.add(documentToGroup(doc)));
+            collection.find().forEach(doc -> groups.add(documentToGroup(doc)));
             return groups;
         } catch (Exception e) {
             logger.error("Error finding all groups", e);
@@ -60,65 +57,66 @@ public class MongoGroupRepository implements GroupRepository {
     }
 
     @Override
-public List<Group> findByMemberNumber(String memberNumber) {
-    List<Group> groups = new ArrayList<>();
-    try {
-        // Find all groups that contain a member with the specified number
-        collection.find(
-            Filters.elemMatch("members", 
-                Filters.eq("number", memberNumber))
-        ).forEach(doc -> 
-            groups.add(documentToGroup(doc)));
-        return groups;
-    } catch (Exception e) {
-        logger.error("Error finding groups by member number: " + memberNumber, e);
-        throw new RuntimeException("Database error", e);
+    public List<Group> findByMemberNumber(String memberNumber) {
+        List<Group> groups = new ArrayList<>();
+        try {
+            // Find all groups that contain a member with the specified number
+            collection.find(
+                Filters.elemMatch("members", Filters.eq("number", memberNumber))
+            ).forEach(doc -> 
+                groups.add(documentToGroup(doc)));
+            return groups;
+        } catch (Exception e) {
+            logger.error("Error finding groups by member number: " + memberNumber, e);
+            throw new RuntimeException("Database error", e);
+        }
     }
-}
 
-@Override
-public boolean exists(String groupNumber) {
-    try {
-        return collection.countDocuments(Filters.eq("groupNumber", groupNumber)) > 0;
-    } catch (Exception e) {
-        logger.error("Error checking if group exists: " + groupNumber, e);
-        throw new RuntimeException("Database error", e);
+    @Override
+    public boolean exists(String groupNumber) {
+        try {
+            return collection.countDocuments(Filters.eq("groupNumber", groupNumber)) > 0;
+        } catch (Exception e) {
+            logger.error("Error checking if group exists: " + groupNumber, e);
+            throw new RuntimeException("Database error", e);
+        }
     }
-}
 
-@Override
-public int getAccessCount(String groupNumber) {
-    try {
-        Document doc = collection.find(Filters.eq("groupNumber", groupNumber)).first();
-        return doc != null ? doc.getInteger("accessCount", 0) : 0;
-    } catch (Exception e) {
-        logger.error("Error getting access count for group: " + groupNumber, e);
-        throw new RuntimeException("Database error", e);
+    @Override
+    public int getAccessCount(String groupNumber) {
+        try {
+            Document doc = collection.find(Filters.eq("groupNumber", groupNumber)).first();
+            return doc != null ? doc.getInteger("accessCount", 0) : 0;
+        } catch (Exception e) {
+            logger.error("Error getting access count for group: " + groupNumber, e);
+            throw new RuntimeException("Database error", e);
+        }
     }
-}
 
-@Override
-public void updateLastAccess(String groupNumber, String timestamp) {
-    try {
-        collection.updateOne(
-            Filters.eq("groupNumber", groupNumber),
-            Updates.set("lastUpdate", timestamp)
-        );
-    } catch (Exception e) {
-        logger.error("Error updating last access for group: " + groupNumber, e);
-        throw new RuntimeException("Database error", e);
+    @Override
+    public void updateLastAccess(String groupNumber, String timestamp) {
+        try {
+            collection.updateOne(
+                Filters.eq("groupNumber", groupNumber),
+                Updates.set("lastUpdate", timestamp)
+            );
+        } catch (Exception e) {
+            logger.error("Error updating last access for group: " + groupNumber, e);
+            throw new RuntimeException("Database error", e);
+        }
     }
-}
 
-@Override
-public long count() {
-    try {
-        return collection.countDocuments();
-    } catch (Exception e) {
-        logger.error("Error counting groups", e);
-        throw new RuntimeException("Database error", e);
+    @Override
+    public long count() {
+        try {
+            return collection.countDocuments();
+        } catch (Exception e) {
+            logger.error("Error counting groups", e);
+            throw new RuntimeException("Database error", e);
+        }
     }
-}
+
+
     @Override
     public void save(Group group) {
         try {
@@ -147,8 +145,8 @@ public long count() {
         }
     }
 
-@Override
-public void deleteAll() {
+    @Override
+    public void deleteAll() {
     try {
         collection.deleteMany(new Document());
         logger.info("All groups deleted from database");

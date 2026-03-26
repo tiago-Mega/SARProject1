@@ -13,78 +13,90 @@ import java.util.*;
 
 public class Response {
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(Response.class);
+    
     /**
-     * Reply code information
-     */
+    * Reply code information
+    */
     public ReplyCode code;
+    
     /**
-     * Reply headers data
-     */
+    * Reply headers data
+    */
     public Headers headers; // stores the HTTP headers for the response
     public ArrayList<String> setCookie;   // List to store Set-cookie header fields
+    
     /**
-     * Reply contents
-     * They are stored either in a text buffer or in a file
-     */
+    * Reply contents
+    * They are stored either in a text buffer or in a file
+    */
     public String text; // buffer with reply contents for dynamic API responses or server generated HTML code
     public File file;   // file used if text == null, for responses that contain a file  
     private final String serverName;
+    
     /**
-     * Creates a new instance of HTTPAnswer
-      * @param server_name
-     */
+    * Creates a new instance of HTTPAnswer
+     * @param server_name
+    */
     public Response(String server_name) {
         this.code = new ReplyCode(); // code constains an instance of the HTTPReplyCode Class thar contains HTTP code values and an HTTP version field.
         this.headers = new Headers ();  // Headers object to store response HTTP headers  
         this.setCookie = new ArrayList<>(); // Array List of Strings to contain the Strings that make up the several values of the Set_Cookie Header. 
         this.serverName = server_name;
+    
         /**
-         * define Server header field name
-         */
+        * define Server header field name
+        */
+    
         this.headers.setHeader("Server", server_name);
     }
 
     /* 
-    Method to set the HTTP reply code of the answer
+    * Method to set the HTTP reply code of the answer
     */
     public void setCode(int _code) {
         code.setCode(_code);
     }
+
     /* 
-    Method to set the HTTP version of the answer
+    * Method to set the HTTP version of the answer
     */
     public void setVersion(String v) {
         code.setVersion(v);
     }
-     /* 
-    Method to set an HTTP header of the answer
+
+    /* 
+    * Method to set an HTTP header of the answer
     */
     public void setHeader(String name, String value) {
         headers.setHeader(name, value);
     }
+
     /*
-     * Method to set the static file to be sent in the reply
-     */
+    * Method to set the static file to be sent in the reply
+    */
     public void setFile(File file) {
         this.file = file;
     }
+    
     /*
-     * Method to set the text to be sent in the reply
-     */
+    * Method to set the text to be sent in the reply
+    */
     public void setText(String text) {
         this.text = text;
     }
-  /* 
-    Method to add a cookie value to the list of cookies that are to be sent in Set-Cookie Headers
+  
+    /* 
+    * Method to add a cookie value to the list of cookies that are to be sent in Set-Cookie Headers
     */
     public void addCookie(String cookie) {
         setCookie.add(cookie);
     }
 
     /** Sets the headers needed in a reply with a static file content and fill
-     * the file property with the File object of the static file to send
-     * @param _f
-     * @param mime_enc */
+    * the file property with the File object of the static file to send
+    * @param _f
+    * @param mime_enc 
+    */
     public void setFileHeaders(File file, String contentType) {
         this.file = file;
         this.file = null;
@@ -94,9 +106,10 @@ public class Response {
     }
 
     /** Sets the headers needed in a reply with a locally generated HTML string
-     * (_text object) and fill the text property with the String object 
-     * containing the HTML to send
-     * @param _text */
+    * (_text object) and fill the text property with the String object 
+    * containing the HTML to send
+    * @param _text 
+    */
     public void setTextHeaders(String text) {
         this.text = text;
         this.file = null;
@@ -105,9 +118,10 @@ public class Response {
         logger.debug("Header fields not defined in HTTPAnswer.set_text");
     }
 
-        /** Prepares an HTTP answer with an error code
-     * @param _code
-     * @param version */
+    /** Prepares an HTTP answer with an error code
+    * @param _code
+    * @param version 
+    */
     public void setError(int codeNumber, String version) {
         setVersion(version);
         setDate();
@@ -126,30 +140,30 @@ public class Response {
     }
 
     /**
-     * Returns the current value of the answer code
-     * @return 
-     */
+    * Returns the current value of the answer code
+    * @return 
+    */
     public int getCode() {
         return code.getCode();
     }
 
     /**
-     * Returns an iterator over all header names
-     * @return 
-     */
+    * Returns an iterator over all header names
+    * @return 
+    */
     public Enumeration<Object> get_Iterator_parameter_names() {
         return headers.getAllHeaderNames();
     }
 
     /**
-     * Returns the array list with all cookie Strings to use as values in Set-Cookie Headers
-     * @return 
-     */
+    * Returns the array list with all cookie Strings to use as values in Set-Cookie Headers
+    * @return 
+    */
     public ArrayList<String> getSetCookies() {
         return setCookie;
     }
 
-    /** Sets the "Date" header field with the local date in HTTP format */
+    /* Sets the "Date" header field with the local date in HTTP format */
     void setDate() {
         DateFormat httpformat =
                 new SimpleDateFormat("EE, d MMM yyyy HH:mm:ss zz", Locale.UK);
@@ -159,10 +173,11 @@ public class Response {
 
 
     /** Sends the HTTP reply to the client using 'pout' text device
-     * @param TextPrinter
-     * @param send_data indicates if data is present in the response or only headers
-     * @param echo
-     * @throws java.io.IOException */
+    * @param TextPrinter
+    * @param send_data indicates if data is present in the response or only headers
+    * @param echo
+    * @throws java.io.IOException
+    */
     public void send_Answer(PrintStream TextPrinter) throws IOException {
         if (code.getCodeTxt() == null) {
             code.setCode(ReplyCode.BADREQ);
@@ -173,16 +188,18 @@ public class Response {
         //Send all headers using the Headers object
         headers.writeHeaders(TextPrinter);
         /**
-         * Check if there are cookies to send if so add the corresponding Set-Cookie Headers
-         * Set-Cookies have to be sent manually using TextPrinter without using the Headers object 
-         * since it uses a Properties Object to store the headers and there can be multiple Set-cookie headers 
-         * and a Properties cannot have two Keys with the same value
-         */
+        * Check if there are cookies to send if so add the corresponding Set-Cookie Headers
+        * Set-Cookies have to be sent manually using TextPrinter without using the Headers object 
+        * since it uses a Properties Object to store the headers and there can be multiple Set-cookie headers 
+        * and a Properties cannot have two Keys with the same value
+        */
+
         //end of headers
         TextPrinter.print("\r\n");
+
         //write content if present
         if (text != null) {
-                TextPrinter.print(text);
+            TextPrinter.print(text);
         } else if (file != null) {
             writeFile(TextPrinter);
             } else if ((code.getCode() != ReplyCode.NOTMODIFIED)&&(code.getCode() != ReplyCode.TMPREDIRECT)) {

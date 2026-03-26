@@ -14,8 +14,8 @@ public class MongoConfig {
     //private static final String MONGO_HOST = System.getenv().getOrDefault("MONGO_HOST", "localhost");
     //private static final int MONGO_PORT = Integer.parseInt(System.getenv().getOrDefault("MONGO_PORT", "27017"));
     private static final String MONGO_DATABASE = System.getenv().getOrDefault("MONGO_DATABASE", "sardb");
-   // private static final String MONGO_USER = System.getenv().getOrDefault("MONGO_USER", "root");
-   // private static final String MONGO_PASSWORD = System.getenv().getOrDefault("MONGO_PASSWORD", "example");
+    // private static final String MONGO_USER = System.getenv().getOrDefault("MONGO_USER", "root");
+    // private static final String MONGO_PASSWORD = System.getenv().getOrDefault("MONGO_PASSWORD", "example");
 
     // Singleton instance of MongoClient
     private static MongoClient mongoClient;
@@ -46,8 +46,7 @@ public class MongoConfig {
                 .applyToSocketSettings(builder ->
                     builder.connectTimeout(5000, java.util.concurrent.TimeUnit.MILLISECONDS)
                            .readTimeout(5000, java.util.concurrent.TimeUnit.MILLISECONDS)
-                )
-                .build();
+                ).build();
 
             // Create and return MongoDB client
             return MongoClients.create(settings);

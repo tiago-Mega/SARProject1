@@ -14,14 +14,15 @@ public class Group {
     private String lastUpdate;
     private boolean counter;
 
-   // Constructor
-   public Group() {
-    this.members = new Member[Main.GROUP_SIZE]; // Initialize with 3 members as per original implementation
-    this.accessCount = 0;
-    this.lastUpdate = Instant.now().toString();
-   }
-   // Getters and Setters
-   public ObjectId getId() {
+    // Constructor
+    public Group() {
+        this.members = new Member[Main.GROUP_SIZE]; // Initialize with 3 members as per original implementation
+        this.accessCount = 0;
+        this.lastUpdate = Instant.now().toString();
+    }
+   
+    // Getters and Setters
+    public ObjectId getId() {
         return id;
     }
 
@@ -76,8 +77,8 @@ public class Group {
         this.members = members;
     }
     
-     // Utility methods
-     public void updateLastUpdate() {
+    // Utility methods
+    public void updateLastUpdate() {
         this.lastUpdate = Instant.now().toString();
     }
 
@@ -99,13 +100,13 @@ public class Group {
     @Override
     public String toString() {
         return "Group{" +
-                "id=" + id +
-                ", groupNumber='" + groupNumber + '\'' +
-                ", accessCount=" + accessCount +
-                ", members=" + Arrays.toString(members) +
-                ", lastUpdate='" + lastUpdate + '\'' +
-                ", counter=" + counter +
-                '}';
+            "id=" + id +
+            ", groupNumber='" + groupNumber + '\'' +
+            ", accessCount=" + accessCount +
+            ", members=" + Arrays.toString(members) +
+            ", lastUpdate='" + lastUpdate + '\'' +
+            ", counter=" + counter +
+            '}';
     }
 
 
@@ -114,7 +115,6 @@ public class Group {
         private String number;
         private String name;
 
-        // getters and setters
         // Constructor
         public Member() {
         }
@@ -143,15 +143,12 @@ public class Group {
 
         @Override
         public String toString() {
-            return "Member{" +
-                    "number='" + number + '\'' +
-                    ", name='" + name + '\'' +
-                    '}';
+            return "Member{" + "number='" + number + '\'' + ", name='" + name + '\'' + '}';
         }
     }
 
-     // Builder pattern
-     public static class Builder {
+    // Builder pattern
+    public static class Builder {
         private Group group;
 
         public Builder() {
