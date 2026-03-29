@@ -1,15 +1,14 @@
 package com.sar.web.http;
 
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.*;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.FileInputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
 
 public class Response {
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(Response.class);
@@ -35,7 +34,7 @@ public class Response {
     
     /**
     * Creates a new instance of HTTPAnswer
-     * @param server_name
+    * @param server_name
     */
     public Response(String server_name) {
         this.code = new ReplyCode(); // code constains an instance of the HTTPReplyCode Class thar contains HTTP code values and an HTTP version field.
@@ -187,6 +186,7 @@ public class Response {
         
         //Send all headers using the Headers object
         headers.writeHeaders(TextPrinter);
+
         /**
         * Check if there are cookies to send if so add the corresponding Set-Cookie Headers
         * Set-Cookies have to be sent manually using TextPrinter without using the Headers object 

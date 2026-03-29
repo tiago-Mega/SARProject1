@@ -2,9 +2,6 @@ package com.sar.web.http;
 
 import java.util.Properties;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 /**
 *
@@ -14,8 +11,6 @@ import org.slf4j.LoggerFactory;
 * Incomplete Version 24/25
 */
 public class Request {
-    private static final Logger logger = LoggerFactory.getLogger(Request.class);
-
     private final String clientAddress;
     private final int clientPort;
     private final int serverPort;
@@ -52,6 +47,11 @@ public class Request {
     // Method to getClientPort
     public int getClientPort() {
         return clientPort;
+    }
+
+    // Method to getServerPort
+    public int getServerPort() {
+        return serverPort;
     }
 
     // Cookie handling get cokkie header value and parse it in to the cookies properties

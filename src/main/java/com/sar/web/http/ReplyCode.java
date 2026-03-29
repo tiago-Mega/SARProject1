@@ -9,6 +9,7 @@ public class ReplyCode {
     public static final int UNAUTHORIZED= 401;
     public static final int NOTFOUND= 404;
     public static final int PROXYAUTHENTIC=407;
+    public static final int INTERNALERROR= 500;
     public static final int NOTIMPLEMENTED= 501;
 
     
@@ -88,6 +89,8 @@ public class ReplyCode {
                 return "Not Implemented";
             case PROXYAUTHENTIC:
                 return "Proxy Authentication Required";
+            case INTERNALERROR:
+                return "Internal Server Error";
             default:
                 return null;
         }
