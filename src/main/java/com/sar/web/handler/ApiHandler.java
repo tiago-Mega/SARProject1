@@ -141,6 +141,9 @@ public class ApiHandler extends AbstractRequestHandler {
 
             groupService.saveGroup(groupNumber, numbers, names, counter);
 
+            // Set cookie with last group number for user convenience
+            response.setHeader("Set-Cookie", "lastGroupNumber=" + groupNumber + "; Path=/; Max-Age=86400");
+
             // Respond with success message
             response.setCode(ReplyCode.OK);
             response.setHeader("Content-Type", "application/json");
