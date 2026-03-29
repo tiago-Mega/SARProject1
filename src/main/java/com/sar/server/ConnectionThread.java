@@ -16,6 +16,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.ServerSocket;
+import java.net.URLDecoder;
 import javax.net.ssl.SSLSocket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -111,11 +112,55 @@ public class ConnectionThread extends Thread  {
                 return null; // Incomplete body
             }
             req.text = new String(cbuf);
+            
+            // Parse POST parameters if Content-Type is application/x-www-form-urlencoded
+            String contentType = req.headers.getHeaderValue("Content-Type");
+            if (contentType != null && contentType.contains("application/x-www-form-urlencoded")) {
+                parsePostParameters(req);
+            }
         }
 
         return req;
     }    
    
+    /**
+    * Parses URL - encoded POST parameters from the request body
+    * @param req The request object containing the POST body text
+    */
+    private void parsePostParameters(Request req) {
+              
+        try {
+            // Split the body by '&' to get individual key-value pairs
+            String[] pairs = req.text.split("&");
+            for (String pair : pairs) {
+                // Split each pair by '=' to separate key and value
+                int idx = pair.indexOf('=');
+                if (idx > 0) {
+                    String key = pair.substring(0, idx);
+                    String value = idx < pair.length() - 1 ? pair.substring(idx + 1) : "";
+                    
+                    // URL-decode both key and value
+                    key = URLDecoder.decode(key, "UTF-8");
+                    value = URLDecoder.decode(value, "UTF-8");
+                    
+                    // Store in postParameters
+                    req.getPostParameters().setProperty(key, value);
+                    logger.debug("POST parameter: {} = {}", key, value);
+                } else if (idx == 0) {
+                    // Handle case where key is empty (=value)
+                    logger.warn("Empty parameter key in POST data: {}", pair);
+                } else {
+                    // Handle case where there's no '=' (just a key with no value)
+                    String key = URLDecoder.decode(pair, "UTF-8");
+                    req.getPostParameters().setProperty(key, "");
+                    logger.debug("POST parameter (no value): {} = \"\"", key);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error parsing POST parameters", e);
+        }
+    }
+
     /**
     * Checks if the connection is an HTTP connection (not HTTPS)
     * @return
