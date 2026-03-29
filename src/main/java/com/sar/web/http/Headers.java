@@ -1,7 +1,5 @@
 package com.sar.web.http;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.io.*;
 
@@ -10,8 +8,6 @@ import java.io.*;
 * @author pedroamaral
 */
 public class Headers {
-    private static final Logger logger = LoggerFactory.getLogger(Headers.class);
-
     public Properties headers;  // Single value list of headers
     
     /**
