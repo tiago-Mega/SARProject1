@@ -1,25 +1,28 @@
 package com.sar.server;
 
-import com.sar.controller.HttpController;
 import com.sar.web.http.Request;
 import com.sar.web.http.Response;
 import com.sar.web.http.ReplyCode;
+import com.sar.controller.HttpController;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintStream;
-import java.net.ServerSocket;
+import java.io.OutputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.Socket;
+import java.net.ServerSocket;
+import javax.net.ssl.SSLSocket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
-import java.util.StringTokenizer;
 import java.util.TimeZone;
+import java.util.StringTokenizer;
+
 
 public class ConnectionThread extends Thread  {
     private static final Logger logger = LoggerFactory.getLogger(ConnectionThread.class);
@@ -30,7 +33,10 @@ public class ConnectionThread extends Thread  {
     private final Socket client;
     private final DateFormat HttpDateFormat;
     
-    /** Creates a new instance of httpThread */
+    // Timeout for keep-alive connections in milliseconds
+    private static final int KEEP_ALIVE_TIMEOUT = 20000;
+
+    // Constructor for the ConnectionThread class. 
     public ConnectionThread(Main HTTPServer, ServerSocket ServerSock, 
     Socket client, HttpController controller) {
         this.HTTPServer = HTTPServer;
@@ -41,99 +47,151 @@ public class ConnectionThread extends Thread  {
         this.HttpDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
 
         setPriority(NORM_PRIORITY - 1);
-}
+    }
     
 
-     /** Reads a new HTTP Request from the input steam in to a Request object
-     * @param TextReader   input stream Buffered Reader coonected to client socket
-     * @param echo  if true, echoes the received message to the screen
-     * @return Request object containing the request received from the client, or null in case of error
-     * @throws java.io.IOException 
-     */
+    /** Reads a new HTTP Request from the input steam in to a Request object
+    * @param TextReader   input stream Buffered Reader coonected to client socket
+    * @param echo  if true, echoes the received message to the screen
+    * @return Request object containing the request received from the client, or null in case of error
+    * @throws java.io.IOException 
+    */
     public Request GetRequest (BufferedReader TextReader) throws IOException {
-        // Get first line
-        String request = TextReader.readLine( );  	// Reads the first line
+        
+        // Read the request line
+        String request = TextReader.readLine();
         if (request == null) {
             logger.debug("Invalid request Connection closed");
             return null;
         }
-        logger.info("Request: ", request);
+        logger.info("Request: {}", request);
+
+        // Tokenize the request line and check if it has the correct format (method, URL, version)
         StringTokenizer st= new StringTokenizer(request);
         if (st.countTokens() != 3) {
-           logger.debug("Invalid request received ", request);
+           logger.debug("Invalid request received {}", request);
            return null;  // Invalid request
         } 
-         //create an object to store the http request
-         Request req= new Request (client.getInetAddress ().getHostAddress (), client.getPort (), ServerSock.getLocalPort ());  
-         req.method= st.nextToken();    // Store HTTP method
-         req.urlText= st.nextToken();    // Store URL
-         req.version= st.nextToken();  // Store HTTP version
+        // Create a new Request object and store the method, URL and version in it
+        Request req= new Request (client.getInetAddress ().getHostAddress (), client.getPort (), ServerSock.getLocalPort ());  
+        req.method  = st.nextToken();    // Store HTTP method
+        req.urlText = st.nextToken();    // Store URL
+        req.version = st.nextToken();    // Store HTTP version
      
-        // read the remaining headers in to the headers property of the request object   
+        // Read the HTTP headers and store them in the Request object. The headers are read until an empty line is found (that indicates the end of the headers)
+        String line;
+        while ((line = TextReader.readLine()) != null) {
+            if (line.isEmpty()) break; // End of headers
+            int idx = line.indexOf(':');
+            if (idx > 0) {
+                String name = line.substring(0, idx).trim();
+                String value = line.substring(idx+1).trim();
+                req.headers.setHeader(name, value);
+                logger.debug("Header: {}: {}", name, value);
+            }
+        }
+
+        req.parseCookies();
         
-        // check if the Content-Length size is different than zero. If true read the body of the request (that can contain POST data)
-        int clength= 0;
+        // Check if there is a Content-Length header and if so read the specified number of bytes from the input stream and store it in the Request object. 
+        int clength = 0;
         try {
-            String len= req.headers.getHeaderValue("Content-Length");
-            if (len != null)
-                clength= Integer.parseInt (len);
-            else if (!TextReader.ready ())
-                clength= 0;
+            String len = req.headers.getHeaderValue("Content-Length");
+            if (len != null) clength = Integer.parseInt(len);
         } catch (NumberFormatException e) {
             logger.error("Bad request\n");
             return null;
         }
-        if (clength>0) {
-            // Length is not 0 - read data to string
-            String str= new String ();
-            char [] cbuf= new char [clength];
-            //the content is not formed by line ended with \n so it need to be read char by char
-            int n, cnt= 0;
-            while ((cnt<clength) && ((n= TextReader.read (cbuf)) > 0)) {
-                str= str + new String (cbuf);
-                cnt += n;
+
+        if (clength > 0) {
+            char[] cbuf = new char[clength];
+            int read = TextReader.read(cbuf, 0, clength);
+            if (read != clength) {
+                logger.error("Expected {} bytes but got {}", clength, read);
+                return null; // Incomplete body
             }
-            if (cnt != clength) {
-                logger.info("Read request with {}} data bytes and Content-Length = {}} bytes\n",cnt, clength);
-                return null;
-            }
-            req.text= str;
-            logger.debug("Contents('"+req.text+"')\n");
+            req.text = new String(cbuf);
         }
 
         return req;
     }    
    
-    
-     @Override
-    public void run( ) {
+    /**
+    * Checks if the connection is an HTTP connection (not HTTPS)
+    * @return
+    */
+    private boolean isHttpConnection() {
+        return !(client instanceof SSLSocket);
+    }
 
-        Response res= null;   // HTTP response object
-        Request req = null;   //HTTP request object
+
+    /**
+    * Builds the redirect URL for HTTPS connections
+    * @param req
+    * @return
+    */
+    private String buildRedirectUrl(Request req) {
+        return "https://" + client.getLocalAddress().getHostName() + ":" + Main.HTTPSport + req.urlText;
+    }
+
+    
+    @Override
+    public void run(){
+
+        Response res = null;   // HTTP response object
+        Request req = null;    // HTTP request object
         PrintStream TextPrinter= null;
 
         try {
-            /*get the input and output Streams for the TCP connection and build
-              a text (ASCII) reader (TextReader) and writer (TextPrinter) */
             InputStream in = client.getInputStream( );
-            BufferedReader TextReader = new BufferedReader(
-                    new InputStreamReader(in, "8859_1" ));
             OutputStream out = client.getOutputStream( );
+            BufferedReader TextReader = new BufferedReader(new InputStreamReader(in, "8859_1" ));
             TextPrinter = new PrintStream(out, false, "8859_1");
-            // Read and parse request
-            req= GetRequest(TextReader); //reads the input http request if everything was read ok it returns true
-            //Create response object. 
-            res= new Response(HTTPServer.ServerName);
-            // Let the controler (HttpContrller) handle the request and fill the response.
-            controller.handleRequest(req, res);
-            // Send response
-            res.send_Answer(TextPrinter);
 
+            // Set socket timeout for keep-alive connections
+            client.setSoTimeout(KEEP_ALIVE_TIMEOUT);
+
+            do {
+                // Read and parse request
+                if((req = GetRequest(TextReader)) == null) {
+                    logger.debug("No valid request received, closing connection");
+                    break; // Invalid request, close connection
+                }          
+
+                //Create response object. 
+                res = new Response(HTTPServer.ServerName);
+
+                // Check if the connection is HTTP and if so, redirect to HTTPS
+                if (isHttpConnection()) {
+                    String redirectUrl = buildRedirectUrl(req);
+                    logger.info("Redirecting HTTP -> HTTPS: {}", redirectUrl);
+                    res.setCode(ReplyCode.TMPREDIRECT);                      
+                    res.setHeader("Location", redirectUrl);
+                    res.setHeader("Content-Length", "0");
+                    res.send_Answer(TextPrinter);
+                    TextPrinter.flush();
+                    break; // After a redirect we close — browser will reconnect on HTTPS
+                }
+
+                // Set the Connection header in the response based on whether we will keep the connection alive or not
+                res.setHeader("Connection", req.headers.getHeaderValue("Connection"));
+
+                // Let the controler (HttpContrller) handle the request and fill the response.
+                controller.handleRequest(req, res);
+                
+                // Send response
+                res.send_Answer(TextPrinter);
+                TextPrinter.flush();
+                
+                logger.debug("Served {} {} — keepAlive = {}", req.method, req.urlText, req.headers.getHeaderValue("Connection"));
+
+            } while("keep-alive".equalsIgnoreCase(req.getHeaderValue("Connection")));
+
+        } catch (java.net.SocketTimeoutException e) {
+            logger.debug("Keep-alive timeout, closing connection");
         } catch (Exception e) {
             logger.error("Error processing request", e);
-            if (res != null) {
-                res.setError(ReplyCode.BADREQ, req != null ? req.version : "HTTP/1.1");
-            }
+            if (res != null) res.setError(ReplyCode.BADREQ, req != null ? req.version : "HTTP/1.1");
         } finally {
             cleanup(TextPrinter);
         }

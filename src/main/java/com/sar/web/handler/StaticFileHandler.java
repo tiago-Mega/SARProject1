@@ -3,12 +3,13 @@ package com.sar.web.handler;
 import com.sar.web.http.Request;
 import com.sar.web.http.Response;
 import com.sar.web.http.ReplyCode;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.HashMap;
 
 public class StaticFileHandler extends AbstractRequestHandler {
     private static final Logger logger = LoggerFactory.getLogger(StaticFileHandler.class);
@@ -39,7 +40,7 @@ public class StaticFileHandler extends AbstractRequestHandler {
     protected void handleGet(Request request, Response response) {
         String path = request.urlText;
         if (path.equals("/")) {
-            path = "/"+homeFileName;
+            path = "/" + homeFileName;
         }
 
         String fullPath = baseDirectory + path;
@@ -47,11 +48,13 @@ public class StaticFileHandler extends AbstractRequestHandler {
         
         try {
             if (file.exists() && file.isFile()) {
+                String mimeType = getMimeType(path);
                 response.setCode(ReplyCode.OK);
                 response.setVersion(request.version);
+                response.setHeader("Content-Type", mimeType);
+                response.setHeader("Content-Length", String.valueOf(file.length()));
                 response.setFile(file);
-                // set file headers
-                logger.info("Serving file: {}", fullPath);
+                logger.info("Serving file: {} ({})", fullPath, mimeType);
             } else {
                 logger.warn("File not found: {}. Returning 404 error.", fullPath);
                 response.setCode(ReplyCode.NOTFOUND);
@@ -59,7 +62,7 @@ public class StaticFileHandler extends AbstractRequestHandler {
             }
         } catch (Exception e) {
             logger.error("Error handling GET request for file: {}", fullPath, e);
-            response.setError(ReplyCode.BADREQ, request.version);
+            response.setError(ReplyCode.INTERNALERROR, request.version);
         }
     }
 
