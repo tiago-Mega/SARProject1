@@ -133,6 +133,7 @@ public class ApiHandler extends AbstractRequestHandler {
 
                 if (numbers[m] == null || numbers[m].isBlank() || names[m] == null || names[m].isBlank()) {
                     response.setCode(ReplyCode.BADREQ);
+                    response.setVersion(request.version);
                     response.setHeader("Content-Type", "application/json");
                     response.setText("{\"error\":\"Member " + m + " data is incomplete\"}");
                     return;
@@ -146,6 +147,7 @@ public class ApiHandler extends AbstractRequestHandler {
 
             // Respond with success message
             response.setCode(ReplyCode.OK);
+            response.setVersion(request.version);
             response.setHeader("Content-Type", "application/json");
             response.setText("{\"message\":\"Group saved successfully\"}");
 
