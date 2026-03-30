@@ -106,7 +106,7 @@ public class ApiHandler extends AbstractRequestHandler {
             String counterStr = request.getPostParameters().getProperty("counter", "false");
 
             if (groupNumber == null || groupNumber.isEmpty()) {
-                response.setCode(ReplyCode.BADREQ);
+                response.setError(ReplyCode.BADREQ, request.version);
                 response.setText("{\"error\":\"Group number is required\"}");
                 response.setHeader("Content-Type", "application/json");
                 return;
@@ -132,8 +132,7 @@ public class ApiHandler extends AbstractRequestHandler {
                 names[m] = request.getPostParameters().getProperty("name" + m);
 
                 if (numbers[m] == null || numbers[m].isBlank() || names[m] == null || names[m].isBlank()) {
-                    response.setCode(ReplyCode.BADREQ);
-                    response.setVersion(request.version);
+                    response.setError(ReplyCode.BADREQ, request.version);
                     response.setHeader("Content-Type", "application/json");
                     response.setText("{\"error\":\"Member " + m + " data is incomplete\"}");
                     return;
@@ -154,8 +153,7 @@ public class ApiHandler extends AbstractRequestHandler {
         } catch (Exception e) {
             logger.error("Error saving group", e);
 
-            response.setCode(ReplyCode.INTERNALERROR);
-            response.setVersion(request.version);
+            response.setError(ReplyCode.INTERNALERROR, request.version);
             response.setText("{\"error\":\"Failed to save group\"}");
             response.setHeader("Content-Type", "application/json");
         }

@@ -12,7 +12,9 @@ import java.util.Map;
 import java.util.HashMap;
 
 public class StaticFileHandler extends AbstractRequestHandler {
+
     private static final Logger logger = LoggerFactory.getLogger(StaticFileHandler.class);
+
     private final String baseDirectory;
     private final String homeFileName;
     private final Map<String, String> mimeTypes;
@@ -57,8 +59,7 @@ public class StaticFileHandler extends AbstractRequestHandler {
                 logger.info("Serving file: {} ({})", fullPath, mimeType);
             } else {
                 logger.warn("File not found: {}. Returning 404 error.", fullPath);
-                response.setCode(ReplyCode.NOTFOUND);
-                response.setVersion(request.version);
+                response.setError(ReplyCode.NOTFOUND, request.version);
             }
         } catch (Exception e) {
             logger.error("Error handling GET request for file: {}", fullPath, e);

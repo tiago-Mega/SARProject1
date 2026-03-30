@@ -28,8 +28,8 @@ public class Response {
     * Reply contents
     * They are stored either in a text buffer or in a file
     */
-    public String text; // buffer with reply contents for dynamic API responses or server generated HTML code
     public File file;   // file used if text == null, for responses that contain a file  
+    public String text; // buffer with reply contents for dynamic API responses or server generated HTML code
     private final String serverName;
     
     /**
@@ -138,6 +138,13 @@ public class Response {
         );
     }
 
+    /* Sets the "Date" header field with the local date in HTTP format */
+    void setDate() {
+        DateFormat httpformat = new SimpleDateFormat("EE, d MMM yyyy HH:mm:ss zz", Locale.UK);
+        httpformat.setTimeZone(TimeZone.getTimeZone("GMT"));
+        headers.setHeader("Date", httpformat.format(new Date()));
+    }
+
     /**
     * Returns the current value of the answer code
     * @return 
@@ -160,14 +167,6 @@ public class Response {
     */
     public ArrayList<String> getSetCookies() {
         return setCookie;
-    }
-
-    /* Sets the "Date" header field with the local date in HTTP format */
-    void setDate() {
-        DateFormat httpformat =
-                new SimpleDateFormat("EE, d MMM yyyy HH:mm:ss zz", Locale.UK);
-        httpformat.setTimeZone(TimeZone.getTimeZone("GMT"));
-        headers.setHeader("Date", httpformat.format(new Date()));
     }
 
 
