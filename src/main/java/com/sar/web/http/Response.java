@@ -30,6 +30,10 @@ public class Response {
     */
     public File file;   // file used if text == null, for responses that contain a file  
     public String text; // buffer with reply contents for dynamic API responses or server generated HTML code
+
+    private PrintStream printStream;
+    private boolean fullyHandled = false;
+
     private final String serverName;
     
     /**
@@ -83,7 +87,21 @@ public class Response {
     public void setText(String text) {
         this.text = text;
     }
-  
+    
+    /* 
+    * Method to mark the response as fully handled
+    */
+    public void setFullyHandled(boolean fullyHandled) {
+        this.fullyHandled = fullyHandled;
+    }
+
+    /* 
+    * Method to set the PrintStream to be used for sending the response to the client
+    */
+    public void setPrintStream(PrintStream ps) {
+        this.printStream = ps;
+    }
+
     /* 
     * Method to add a cookie value to the list of cookies that are to be sent in Set-Cookie Headers
     */
@@ -168,6 +186,20 @@ public class Response {
         return setCookie;
     }
 
+    /* 
+    * Method to check if the response is fully handled
+    */
+    public boolean isFullyHandled() {
+        return fullyHandled;
+    }
+
+    /* 
+    * Method to get the PrintStream to be used for sending the response to the client
+    */
+    public PrintStream getPrintStream() {
+        return printStream;
+    }
+    
 
     /** Sends the HTTP reply to the client using 'pout' text device
     * @param TextPrinter

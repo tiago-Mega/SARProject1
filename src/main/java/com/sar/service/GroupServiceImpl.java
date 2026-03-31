@@ -36,10 +36,13 @@ import java.util.List;
 */
 public class GroupServiceImpl implements GroupService {
     private static final Logger logger = LoggerFactory.getLogger(GroupServiceImpl.class);
-    private final GroupRepository repository;
 
-    public GroupServiceImpl(GroupRepository repository) {
+    private final GroupRepository repository;
+    private final EventBroadcaster eventBroadcaster;
+
+    public GroupServiceImpl(GroupRepository repository, EventBroadcaster eventBroadcaster) {
         this.repository = repository;
+        this.eventBroadcaster = eventBroadcaster; 
     }
 
     @Override
@@ -94,11 +97,8 @@ public class GroupServiceImpl implements GroupService {
             // SSE Integration Point:
             // After successfully saving the group, broadcast an event to all connected SSE clients.
             // This allows real-time updates in the browser without page refresh.
-            // 
-            // Example implementation:
-            // String eventType = isNewGroup ? "group.created" : "group.updated";
-            // String eventData = formatGroupAsJson(group, eventType);
-            // eventBroadcaster.broadcast(eventData);
+            String eventType = isNewGroup ? "group.created" : "group.updated";
+            eventBroadcaster.broadcast("{\"type\":\"" + eventType + "\",\"groupNumber\":\"" + groupNumber + "\"}");
             
         } catch (Exception e) {
             logger.error("Error saving group: " + groupNumber, e);
@@ -114,7 +114,7 @@ public class GroupServiceImpl implements GroupService {
             
             // SSE Integration Point:
             // After successfully deleting the group, broadcast a deletion event.
-            // Example: eventBroadcaster.broadcast("{\"type\":\"group.deleted\",\"groupNumber\":\"" + groupNumber + "\"}");
+            eventBroadcaster.broadcast("{\"type\":\"group.deleted\",\"groupNumber\":\"" + groupNumber + "\"}");
             
         } catch (Exception e) {
             logger.error("Error deleting group: " + groupNumber, e);
@@ -122,7 +122,7 @@ public class GroupServiceImpl implements GroupService {
         }
     }
 
-    @Override
+    @Override 
     public void incrementAccessCount(String groupNumber) {
         try {
             repository.incrementAccessCount(groupNumber);
@@ -130,7 +130,7 @@ public class GroupServiceImpl implements GroupService {
             // SSE Integration Point:
             // Optionally broadcast when a group's access count is incremented.
             // This allows real-time statistics updates across connected clients.
-            // Example: eventBroadcaster.broadcast("{\"type\":\"group.accessed\",\"groupNumber\":\"" + groupNumber + "\"}");
+            eventBroadcaster.broadcast("{\"type\":\"group.accessed\",\"groupNumber\":\"" + groupNumber + "\"}");
             
         } catch (Exception e) {
             logger.error("Error incrementing access count for group: " + groupNumber, e);

@@ -43,7 +43,7 @@ public class EventBroadcaster {
     * @param clientStream the output stream to send events to
     */
     public void registerClient(OutputStream clientStream) {
-        // Implementation needed
+        clients.add(clientStream);
     }
 
     /**
@@ -52,7 +52,7 @@ public class EventBroadcaster {
     * @param clientStream the output stream to remove
     */
     public void removeClient(OutputStream clientStream) {
-        // Implementation needed
+        clients.remove(clientStream);
     }
 
     /**
@@ -64,7 +64,17 @@ public class EventBroadcaster {
     * @param eventData the data to broadcast (will be formatted as SSE event)
     */
     public void broadcast(String eventData) {
-        // Implementation needed
+        String sseEvent = "data: " + eventData + "\n\n";
+
+        for (OutputStream client : clients) {
+            try {
+                client.write(sseEvent.getBytes());
+                client.flush();
+            } catch (Exception e) {
+                // If an error occurs (e.g., client disconnected), remove the client
+                removeClient(client);
+            }
+        }
     }
 
     /**

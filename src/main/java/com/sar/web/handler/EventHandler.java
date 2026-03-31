@@ -1,8 +1,14 @@
 package com.sar.web.handler;
 
 import com.sar.service.EventBroadcaster;
+import com.sar.web.http.ReplyCode;
 import com.sar.web.http.Request;
 import com.sar.web.http.Response;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.PrintStream;
 
 /**
 * EventHandler manages Server-Sent Events (SSE) connections for real-time updates.
@@ -41,6 +47,7 @@ import com.sar.web.http.Response;
 * The handle() method delegates to handleGet() or handlePost() based on HTTP method.
 */
 public class EventHandler extends AbstractRequestHandler {
+    private static final Logger logger = LoggerFactory.getLogger(EventHandler.class);
 
     private final EventBroadcaster eventBroadcaster;
 
@@ -66,7 +73,28 @@ public class EventHandler extends AbstractRequestHandler {
     */
     @Override
     protected void handleGet(Request request, Response response) {
-        // Implementation needed
+        response.setHeader("Content-Type", "text/event-stream");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setHeader("Connection", "keep-alive");
+
+        PrintStream clientStream = response.getPrintStream();
+
+        try {
+            response.send_Answer(clientStream);
+            response.setFullyHandled(true);     
+            eventBroadcaster.registerClient(clientStream);
+
+            // Keep the connection open indefinitely (or until client disconnects)
+            while (true) {
+                Thread.sleep(15000);
+                clientStream.write(": heartbeat\n\n".getBytes());
+                clientStream.flush();
+                
+            }
+        } catch (Exception e) {
+            // Handle exceptions (e.g., client disconnects)
+            eventBroadcaster.removeClient(clientStream);
+        }
     }
 
     /**
@@ -75,6 +103,7 @@ public class EventHandler extends AbstractRequestHandler {
     */
     @Override
     protected void handlePost(Request request, Response response) {
-        // Implementation needed (usually returns an error)
+        logger.error("EventHandler does not handle POST requests.");
+        response.setError(ReplyCode.NOTIMPLEMENTED, request.version);
     }
 }
