@@ -15,27 +15,27 @@ public class StaticFileHandler extends AbstractRequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(StaticFileHandler.class);
 
-    private final String baseDirectory;
     private final String homeFileName;
+    private final String baseDirectory;
     private final Map<String, String> mimeTypes;
 
     public StaticFileHandler(String baseDirectory, String homeFileName) {
-        this.baseDirectory = baseDirectory;
-        this.homeFileName = homeFileName;
         this.mimeTypes = MIME_TYPES;
+        this.homeFileName = homeFileName;
+        this.baseDirectory = baseDirectory;
     }
 
     private static final Map<String, String> MIME_TYPES = new HashMap<>();
     
     static {
         MIME_TYPES.put(".html", "text/html");
-        MIME_TYPES.put(".htm", "text/html");
-        MIME_TYPES.put(".css", "text/css");
-        MIME_TYPES.put(".js", "text/javascript");
-        MIME_TYPES.put(".jpg", "image/jpeg");
+        MIME_TYPES.put(".htm" , "text/html");
+        MIME_TYPES.put(".css" , "text/css");
+        MIME_TYPES.put(".js"  , "text/javascript");
+        MIME_TYPES.put(".jpg" , "image/jpeg");
         MIME_TYPES.put(".jpeg", "image/jpeg");
-        MIME_TYPES.put(".png", "image/png");
-        MIME_TYPES.put(".gif", "image/gif");
+        MIME_TYPES.put(".png" , "image/png");
+        MIME_TYPES.put(".gif" , "image/gif");
     }
 
     @Override
@@ -51,27 +51,34 @@ public class StaticFileHandler extends AbstractRequestHandler {
         try {
             if (file.exists() && file.isFile()) {
                 String mimeType = getMimeType(path);
+                response.setFile(file);
                 response.setCode(ReplyCode.OK);
                 response.setVersion(request.version);
                 response.setHeader("Content-Type", mimeType);
                 response.setHeader("Content-Length", String.valueOf(file.length()));
-                response.setFile(file);
+                response.setHeader("Connection", request.headers.getHeaderValue("Connection"));
                 logger.info("Serving file: {} ({})", fullPath, mimeType);
             } else {
-                logger.warn("File not found: {}. Returning 404 error.", fullPath);
                 response.setError(ReplyCode.NOTFOUND, request.version);
+                response.setHeader("Content-Length", "0");
+                response.setHeader("Connection", request.headers.getHeaderValue("Connection"));
+                logger.warn("File not found: {}. Returning 404 error.", fullPath);
             }
         } catch (Exception e) {
-            logger.error("Error handling GET request for file: {}", fullPath, e);
             response.setError(ReplyCode.INTERNALERROR, request.version);
+            response.setHeader("Content-Length", "0");
+            response.setHeader("Connection", "close");
+            logger.error("Error handling GET request for file: {}", fullPath, e);
         }
     }
 
     @Override
     protected void handlePost(Request request, Response response) {
         // Static files don't handle POST requests
-        logger.error("StaticFileHandler does not handle POST requests.");
         response.setError(ReplyCode.NOTIMPLEMENTED, request.version);
+        response.setHeader("Content-Length", "0");
+        response.setHeader("Connection", "close");
+        logger.error("StaticFileHandler does not handle POST requests.");
     }
 
     private String getMimeType(String path) {

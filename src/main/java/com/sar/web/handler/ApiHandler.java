@@ -75,15 +75,18 @@ public class ApiHandler extends AbstractRequestHandler {
             response.setCode(ReplyCode.OK);
             response.setVersion(request.version);
             response.setHeader("Content-Type", "application/json");
+            response.setHeader("Connection", request.headers.getHeaderValue("Connection"));
+            response.setHeader("Content-Length", String.valueOf(json.toString().getBytes("UTF-8").length));
             response.setText(json.toString());
 
         } catch (Exception e) {
-            logger.error("Error fetching groups", e);
-
-            response.setCode(ReplyCode.INTERNALERROR);
-            response.setVersion(request.version);
-            response.setText("{\"message\":\"Error fetching groups\"}");
+            String body = "{\"message\":\"Error fetching groups\"}";
+            response.setError(ReplyCode.INTERNALERROR, request.version);
+            response.setText(body);
+            response.setHeader("Connection", "close");
             response.setHeader("Content-Type", "application/json");
+            response.setHeader("Content-Length", String.valueOf(body.length()));
+            logger.error("Error fetching groups", e);
         }
     }
 
@@ -106,19 +109,26 @@ public class ApiHandler extends AbstractRequestHandler {
             String counterStr = request.getPostParameters().getProperty("counter", "false");
 
             if (groupNumber == null || groupNumber.isEmpty()) {
+                String body = "{\"error\":\"Group number is required\"}";
+                
                 response.setError(ReplyCode.BADREQ, request.version);
-                response.setText("{\"error\":\"Group number is required\"}");
+                response.setText(body);
+                response.setHeader("Content-Length", String.valueOf(body.length()));
                 response.setHeader("Content-Type", "application/json");
+                response.setHeader("Connection", request.headers.getHeaderValue("Connection"));
                 return;
             }
 
             if ("delete".equalsIgnoreCase(action)) {
                 groupService.deleteGroup(groupNumber);
-
+                String body = "{\"message\":\"Group deleted successfully\"}";
+                
                 response.setCode(ReplyCode.OK);
                 response.setVersion(request.version);
+                response.setText(body);
                 response.setHeader("Content-Type", "application/json");
-                response.setText("{\"message\":\"Group deleted successfully\"}");
+                response.setHeader("Content-Length", String.valueOf(body.length()));
+                response.setHeader("Connection", request.headers.getHeaderValue("Connection"));
                 return;
             }
 
@@ -132,9 +142,13 @@ public class ApiHandler extends AbstractRequestHandler {
                 names[m] = request.getPostParameters().getProperty("name" + m);
 
                 if (numbers[m] == null || numbers[m].isBlank() || names[m] == null || names[m].isBlank()) {
+                    String body = "{\"error\":\"Member " + m + " data is incomplete\"}";
+                    
                     response.setError(ReplyCode.BADREQ, request.version);
+                    response.setText(body);
                     response.setHeader("Content-Type", "application/json");
-                    response.setText("{\"error\":\"Member " + m + " data is incomplete\"}");
+                    response.setHeader("Content-Length", String.valueOf(body.length()));
+                    response.setHeader("Connection", request.headers.getHeaderValue("Connection"));
                     return;
                 }
             }
@@ -145,17 +159,24 @@ public class ApiHandler extends AbstractRequestHandler {
             response.setHeader("Set-Cookie", "lastGroupNumber=" + groupNumber + "; Path=/; Max-Age=86400");
 
             // Respond with success message
+            String body = "{\"message\":\"Group saved successfully\"}";
+           
             response.setCode(ReplyCode.OK);
             response.setVersion(request.version);
+            response.setText(body);
             response.setHeader("Content-Type", "application/json");
-            response.setText("{\"message\":\"Group saved successfully\"}");
+            response.setHeader("Content-Length", String.valueOf(body.length()));
+            response.setHeader("Connection", request.headers.getHeaderValue("Connection"));
 
         } catch (Exception e) {
-            logger.error("Error saving group", e);
-
+            String body = "{\"error\":\"Failed to save group\"}";
+            
             response.setError(ReplyCode.INTERNALERROR, request.version);
-            response.setText("{\"error\":\"Failed to save group\"}");
+            response.setText(body);
             response.setHeader("Content-Type", "application/json");
+            response.setHeader("Content-Length", String.valueOf(body.length()));
+            response.setHeader("Connection", request.headers.getHeaderValue("Connection"));
+            logger.error("Error saving group", e);
         }
     }
 }

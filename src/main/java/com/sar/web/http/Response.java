@@ -122,11 +122,10 @@ public class Response {
     * @param version 
     */
     public void setError(int codeNumber, String version) {
-        setVersion(version);
         setDate();
+        setVersion(version);
         code.setCode(codeNumber);
-        String errorHtml = generateErrorPage(codeNumber);
-        setTextHeaders(errorHtml);
+        setTextHeaders(generateErrorPage(codeNumber));
     }
 
     private String generateErrorPage(int code) {

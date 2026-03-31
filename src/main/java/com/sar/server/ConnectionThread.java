@@ -40,10 +40,10 @@ public class ConnectionThread extends Thread  {
     // Constructor for the ConnectionThread class. 
     public ConnectionThread(Main HTTPServer, ServerSocket ServerSock, 
     Socket client, HttpController controller) {
-        this.HTTPServer = HTTPServer;
-        this.ServerSock = ServerSock;
         this.client = client;
         this.controller = controller;
+        this.HTTPServer = HTTPServer;
+        this.ServerSock = ServerSock;
         this.HttpDateFormat = new SimpleDateFormat("EE, d MMM yyyy HH:mm:ss zz", Locale.UK);
         this.HttpDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
 
@@ -217,9 +217,6 @@ public class ConnectionThread extends Thread  {
                     TextPrinter.flush();
                     break; // After a redirect we close — browser will reconnect on HTTPS
                 }
-
-                // Set the Connection header in the response based on whether we will keep the connection alive or not
-                res.setHeader("Connection", req.headers.getHeaderValue("Connection"));
 
                 // Let the controler (HttpContrller) handle the request and fill the response.
                 controller.handleRequest(req, res);
