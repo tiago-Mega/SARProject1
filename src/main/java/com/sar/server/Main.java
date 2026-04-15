@@ -59,7 +59,7 @@ public class Main {
     
     // Server components
     private ServerThread MainThread= null;
-    private ServerThread MainSecureThread = null; //https thread
+    private ServerThread MainSecureThread = null; 
     private ServerSocket server;
     private SSLServerSocket serverS;
     private int n_threads=0;
@@ -75,13 +75,13 @@ public class Main {
         logger.info("Initializing Group Repository...");
         this.groupRepository = initializeGroupRepository(this.mongoClient);
 
-        // 3. Initialize Service
-        logger.info("Initializing Group Service...");
-        this.groupService = initializeGroupService(this.groupRepository);
-
-        // 4. Initialize EventBroadcaster for SSE
+        // 3. Initialize EventBroadcaster for SSE
         logger.info("Initializing Event Broadcaster...");
         this.eventBroadcaster = initializeEventBroadcaster();
+
+        // 4. Initialize Service
+        logger.info("Initializing Group Service...");
+        this.groupService = initializeGroupService(this.groupRepository, this.eventBroadcaster);
 
         // 5. Initialize Handlers   
         logger.info("Initializing Static File Handler...");
@@ -124,21 +124,21 @@ public class Main {
         }
     }
 
-    private GroupService initializeGroupService(GroupRepository repository) {
-        try {
-            return new GroupServiceImpl(repository);
-        } catch (Exception e) {
-            logger.error("Failed to initialize Group Service", e);
-            throw new RuntimeException("Service initialization failed", e);
-        }
-    }
-
     private EventBroadcaster initializeEventBroadcaster() {
         try {
             return new EventBroadcaster();
         } catch (Exception e) {
             logger.error("Failed to initialize Event Broadcaster", e);
             throw new RuntimeException("Event Broadcaster initialization failed", e);
+        }
+    }
+
+    private GroupService initializeGroupService(GroupRepository repository, EventBroadcaster eventBroadcaster) {
+        try {
+            return new GroupServiceImpl(repository, eventBroadcaster);
+        } catch (Exception e) {
+            logger.error("Failed to initialize Group Service", e);
+            throw new RuntimeException("Service initialization failed", e);
         }
     }
 

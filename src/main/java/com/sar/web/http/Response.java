@@ -30,6 +30,10 @@ public class Response {
     */
     public File file;   // file used if text == null, for responses that contain a file  
     public String text; // buffer with reply contents for dynamic API responses or server generated HTML code
+
+    private PrintStream printStream;
+    private boolean fullyHandled = false;
+
     private final String serverName;
     
     /**
@@ -37,9 +41,9 @@ public class Response {
     * @param server_name
     */
     public Response(String server_name) {
-        this.code = new ReplyCode(); // code constains an instance of the HTTPReplyCode Class thar contains HTTP code values and an HTTP version field.
+        this.code = new ReplyCode(); // code contains an instance of the HTTPReplyCode Class that contains HTTP code values and an HTTP version field.
         this.headers = new Headers ();  // Headers object to store response HTTP headers  
-        this.setCookie = new ArrayList<>(); // Array List of Strings to contain the Strings that make up the several values of the Set_Cookie Header. 
+        this.setCookie = new ArrayList<>(); // Array List of Strings to contain the Strings that make up the several values of the Set-Cookie header. 
         this.serverName = server_name;
     
         /**
@@ -83,7 +87,21 @@ public class Response {
     public void setText(String text) {
         this.text = text;
     }
-  
+    
+    /* 
+    * Method to mark the response as fully handled
+    */
+    public void setFullyHandled(boolean fullyHandled) {
+        this.fullyHandled = fullyHandled;
+    }
+
+    /* 
+    * Method to set the PrintStream to be used for sending the response to the client
+    */
+    public void setPrintStream(PrintStream ps) {
+        this.printStream = ps;
+    }
+
     /* 
     * Method to add a cookie value to the list of cookies that are to be sent in Set-Cookie Headers
     */
@@ -93,32 +111,29 @@ public class Response {
 
     /** Sets the headers needed in a reply with a static file content and fill
     * the file property with the File object of the static file to send
-    * @param _f
-    * @param mime_enc 
+    * @param file
+    * @param contentType 
     */
     public void setFileHeaders(File file, String contentType) {
         this.file = file;
-        this.file = null;
-        // header lines not set in 'Headers' object!
-        // ...
-        logger.debug("Header fields not defined in HTTPAnswer.set_file");
+        this.headers.setHeader("Content-Type", contentType);
+        this.headers.setHeader("Content-Length", String.valueOf(file.length()));
+        logger.debug("setFileHeaders: {} ({})", file.getName(), contentType);
     }
 
     /** Sets the headers needed in a reply with a locally generated HTML string
-    * (_text object) and fill the text property with the String object 
+    * (text object) and fill the text property with the String object
     * containing the HTML to send
-    * @param _text 
+    * @param text
     */
     public void setTextHeaders(String text) {
         this.text = text;
-        this.file = null;
-        // header lines not set in 'Headers' object!
-        // ...
+        //this.file = null;
         logger.debug("Header fields not defined in HTTPAnswer.set_text");
     }
 
     /** Prepares an HTTP answer with an error code
-    * @param _code
+    * @param codeNumber
     * @param version 
     */
     public void setError(int codeNumber, String version) {
@@ -146,7 +161,7 @@ public class Response {
 
     /**
     * Returns the current value of the answer code
-    * @return 
+    * @return the current response code as an integer
     */
     public int getCode() {
         return code.getCode();
@@ -168,13 +183,25 @@ public class Response {
         return setCookie;
     }
 
-
-    /** Sends the HTTP reply to the client using 'pout' text device
-    * @param TextPrinter
-    * @param send_data indicates if data is present in the response or only headers
-    * @param echo
-    * @throws java.io.IOException
+    /* 
+    * Method to check if the response is fully handled
     */
+    public boolean isFullyHandled() {
+        return fullyHandled;
+    }
+
+    /* 
+    * Method to get the PrintStream to be used for sending the response to the client
+    */
+    public PrintStream getPrintStream() {
+        return printStream;
+    }
+    
+    /**
+     * Sends the HTTP reply to the client using the provided PrintStream.
+     * @param TextPrinter the output stream connected to the client socket
+     * @throws java.io.IOException
+     */
     public void send_Answer(PrintStream TextPrinter) throws IOException {
         if (code.getCodeTxt() == null) {
             code.setCode(ReplyCode.BADREQ);
@@ -182,43 +209,40 @@ public class Response {
         logger.info("Sending reply: {} {} {}", code.getVersion(), code.getCode(), code.getCodeTxt());
         TextPrinter.print(code.toString() + "\r\n");
         
-        //Send all headers using the Headers object
+        // Send all headers
         headers.writeHeaders(TextPrinter);
 
-        /**
-        * Check if there are cookies to send if so add the corresponding Set-Cookie Headers
-        * Set-Cookies have to be sent manually using TextPrinter without using the Headers object 
-        * since it uses a Properties Object to store the headers and there can be multiple Set-cookie headers 
-        * and a Properties cannot have two Keys with the same value
-        */
+        // Send Set-Cookie headers (must be done manually since Properties
+        // cannot hold duplicate keys)
+        for (String cookie : setCookie) {
+            TextPrinter.print("Set-Cookie: " + cookie + "\r\n");
+        }
 
-        //end of headers
+        // End of headers
         TextPrinter.print("\r\n");
 
-        //write content if present
+        // Write body if present
         if (text != null) {
             TextPrinter.print(text);
         } else if (file != null) {
             writeFile(TextPrinter);
-            } else if ((code.getCode() != ReplyCode.NOTMODIFIED)&&(code.getCode() != ReplyCode.TMPREDIRECT)) {
-                logger.error("Internal server error sending answer\n");
-            }
+        } else if ((code.getCode() != ReplyCode.NOTMODIFIED) && (code.getCode() != ReplyCode.TMPREDIRECT)) {
+            logger.error("Internal server error sending answer\n");
+        }
     
         TextPrinter.flush();
     }
 
-    private void writeFile(PrintStream TextPrinter){
+    private void writeFile(PrintStream TextPrinter) {
         try (FileInputStream fin = new FileInputStream(file)) {
-            byte [] data = new byte [fin.available()];
-            fin.read( data );  // Read the entire file to buffer 'data'
+            byte[] data = new byte[fin.available()];
+            fin.read(data);
             // IMPORTANT - Please modify this code to send a file chunk-by-chunk
             //             to avoid having CRASHES with BIG FILES
             logger.info("HTTPAnswer may fail for large files - please modify it");
             TextPrinter.write(data);
-        }
-        catch (IOException e ) {
-            System.out.println( "I/O error opeening FileInputStream " + e );
+        } catch (IOException e) {
+            System.out.println("I/O error opening FileInputStream " + e);
         }
     }
-    
 }

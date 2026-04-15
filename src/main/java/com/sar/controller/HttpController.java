@@ -72,6 +72,10 @@ public class HttpController {
                 url = url.substring(1);
             }
 
+            if (url.contains("?")) {
+                url = url.substring(0, url.indexOf('?'));
+            }
+
             // Find appropriate handler
             AbstractRequestHandler handler = null;
             for (Map.Entry<String, AbstractRequestHandler> entry : handlers.entrySet()) {

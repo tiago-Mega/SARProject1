@@ -218,12 +218,17 @@ public class ConnectionThread extends Thread  {
                     break; // After a redirect we close — browser will reconnect on HTTPS
                 }
 
+                // Set the PrintStream in the response object so that handlers can use it to send data to the client
+                res.setPrintStream(TextPrinter);
+
                 // Let the controler (HttpContrller) handle the request and fill the response.
                 controller.handleRequest(req, res);
                 
                 // Send response
-                res.send_Answer(TextPrinter);
-                TextPrinter.flush();
+                if (!res.isFullyHandled()) {        
+                    res.send_Answer(TextPrinter);
+                    TextPrinter.flush();
+                }
                 
                 logger.debug("Served {} {} — keepAlive = {}", req.method, req.urlText, req.headers.getHeaderValue("Connection"));
 
