@@ -15,7 +15,7 @@ import java.io.PrintStream;
 * 
 * Server-Sent Events Protocol:
 * SSE is a standard for pushing updates from server to client over HTTP. Unlike WebSocket,
-* it's unidirectional (server → client) and uses regular HTTP connections.
+* it's unidirectional (server -> client) and uses regular HTTP connections.
 * 
 * Required HTTP Response Headers:
 * - Content-Type: text/event-stream

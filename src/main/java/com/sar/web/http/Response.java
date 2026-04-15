@@ -41,9 +41,9 @@ public class Response {
     * @param server_name
     */
     public Response(String server_name) {
-        this.code = new ReplyCode(); // code constains an instance of the HTTPReplyCode Class thar contains HTTP code values and an HTTP version field.
+        this.code = new ReplyCode(); // code contains an instance of the HTTPReplyCode Class that contains HTTP code values and an HTTP version field.
         this.headers = new Headers ();  // Headers object to store response HTTP headers  
-        this.setCookie = new ArrayList<>(); // Array List of Strings to contain the Strings that make up the several values of the Set_Cookie Header. 
+        this.setCookie = new ArrayList<>(); // Array List of Strings to contain the Strings that make up the several values of the Set-Cookie header. 
         this.serverName = server_name;
     
         /**
@@ -111,8 +111,8 @@ public class Response {
 
     /** Sets the headers needed in a reply with a static file content and fill
     * the file property with the File object of the static file to send
-    * @param _f
-    * @param mime_enc 
+    * @param file
+    * @param contentType 
     */
     public void setFileHeaders(File file, String contentType) {
         this.file = file;
@@ -123,9 +123,9 @@ public class Response {
     }
 
     /** Sets the headers needed in a reply with a locally generated HTML string
-    * (_text object) and fill the text property with the String object 
+    * (text object) and fill the text property with the String object
     * containing the HTML to send
-    * @param _text 
+    * @param text
     */
     public void setTextHeaders(String text) {
         this.text = text;
@@ -134,7 +134,7 @@ public class Response {
     }
 
     /** Prepares an HTTP answer with an error code
-    * @param _code
+    * @param codeNumber
     * @param version 
     */
     public void setError(int codeNumber, String version) {
@@ -162,7 +162,7 @@ public class Response {
 
     /**
     * Returns the current value of the answer code
-    * @return 
+    * @return the current response code as an integer
     */
     public int getCode() {
         return code.getCode();
