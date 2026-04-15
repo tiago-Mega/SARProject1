@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 * Endpoints:
 * - GET /api → Returns JSON array of all groups
 * - POST /api → Creates/updates a group, returns JSON response
+* - DELETE /api → Deletes a group, returns JSON response
 * 
 * Response format should be JSON with appropriate HTTP headers.
 */
@@ -72,12 +73,13 @@ public class ApiHandler extends AbstractRequestHandler {
             }
             json.append("]");
 
+            String body = json.toString();
             response.setCode(ReplyCode.OK);
             response.setVersion(request.version);
             response.setHeader("Content-Type", "application/json");
             response.setHeader("Connection", request.headers.getHeaderValue("Connection"));
             response.setHeader("Content-Length", String.valueOf(json.toString().getBytes("UTF-8").length));
-            response.setText(json.toString());
+            response.setText(body);
 
         } catch (Exception e) {
             String body = "{\"message\":\"Error fetching groups\"}";
@@ -105,7 +107,6 @@ public class ApiHandler extends AbstractRequestHandler {
         
         try {
             String groupNumber = request.getPostParameters().getProperty("groupNumber");
-            String action = request.getPostParameters().getProperty("action", "save");
             String counterStr = request.getPostParameters().getProperty("counter", "false");
 
             if (groupNumber == null || groupNumber.isEmpty()) {
@@ -115,19 +116,6 @@ public class ApiHandler extends AbstractRequestHandler {
                 response.setText(body);
                 response.setHeader("Content-Length", String.valueOf(body.length()));
                 response.setHeader("Content-Type", "application/json");
-                response.setHeader("Connection", request.headers.getHeaderValue("Connection"));
-                return;
-            }
-
-            if ("delete".equalsIgnoreCase(action)) {
-                groupService.deleteGroup(groupNumber);
-                String body = "{\"message\":\"Group deleted successfully\"}";
-                
-                response.setCode(ReplyCode.OK);
-                response.setVersion(request.version);
-                response.setText(body);
-                response.setHeader("Content-Type", "application/json");
-                response.setHeader("Content-Length", String.valueOf(body.length()));
                 response.setHeader("Connection", request.headers.getHeaderValue("Connection"));
                 return;
             }
@@ -177,6 +165,55 @@ public class ApiHandler extends AbstractRequestHandler {
             response.setHeader("Content-Length", String.valueOf(body.length()));
             response.setHeader("Connection", request.headers.getHeaderValue("Connection"));
             logger.error("Error saving group", e);
+        }
+    }
+
+    /**
+    * Handles DELETE /api - Deletes a group.
+    * 
+    * The request should contain the group number to delete.
+    * Response should be JSON indicating success or failure.
+    * Appropriate HTTP headers must be set.
+    */
+    @Override
+    protected void handleDelete(Request request, Response response) {
+        logger.debug("DELETE /api - Deleting group");
+        
+        try {
+            String groupNumber = request.getPostParameters().getProperty("groupNumber");
+
+            if (groupNumber == null || groupNumber.isEmpty()) {
+                String body = "{\"error\":\"Group number is required for deletion\"}";
+                
+                response.setError(ReplyCode.BADREQ, request.version);
+                response.setText(body);
+                response.setHeader("Content-Type", "application/json");
+                response.setHeader("Content-Length", String.valueOf(body.length()));
+                response.setHeader("Connection", request.headers.getHeaderValue("Connection"));
+                return;
+            }
+
+            groupService.deleteGroup(groupNumber);
+            
+            String body = "{\"message\":\"Group deleted successfully\"}";
+                
+            response.setCode(ReplyCode.OK);
+            response.setVersion(request.version);
+            response.setText(body);
+            response.setHeader("Content-Type", "application/json");
+            response.setHeader("Content-Length", String.valueOf(body.length()));
+            response.setHeader("Connection", request.headers.getHeaderValue("Connection"));
+            
+
+        } catch (Exception e) {
+            String body = "{\"error\":\"Failed to delete group\"}";
+            
+            response.setError(ReplyCode.INTERNALERROR, request.version);
+            response.setText(body);
+            response.setHeader("Content-Type", "application/json");
+            response.setHeader("Content-Length", String.valueOf(body.length()));
+            response.setHeader("Connection", request.headers.getHeaderValue("Connection"));
+            logger.error("Error deleting group", e);
         }
     }
 }

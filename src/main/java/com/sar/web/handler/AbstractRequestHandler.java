@@ -20,6 +20,9 @@ public abstract class AbstractRequestHandler {
             case "POST":
                 handlePost(request, response);
                 break;
+            case "DELETE":
+                handleDelete(request, response);
+                break;
             default:
                 handleUnsupportedMethod(request, response);
         }
@@ -35,10 +38,13 @@ public abstract class AbstractRequestHandler {
     protected void postHandle(Request request, Response response) {
         // Default post-processing, can be overridden
     }
-
+    
+    protected void handleDelete(Request request, Response response) {
+        // Default implementation for DELETE, can be overridden
+    }
     protected abstract void handleGet(Request request, Response response);
     protected abstract void handlePost(Request request, Response response);
-    
+
     protected void handleUnsupportedMethod(Request request, Response response) {
         response.setError(ReplyCode.NOTIMPLEMENTED, request.version);
     }

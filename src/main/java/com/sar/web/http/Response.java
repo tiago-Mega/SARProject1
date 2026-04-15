@@ -116,7 +116,6 @@ public class Response {
     */
     public void setFileHeaders(File file, String contentType) {
         this.file = file;
-        // Bug was here: this.file = null; <-- removed
         this.headers.setHeader("Content-Type", contentType);
         this.headers.setHeader("Content-Length", String.valueOf(file.length()));
         logger.debug("setFileHeaders: {} ({})", file.getName(), contentType);
@@ -129,7 +128,7 @@ public class Response {
     */
     public void setTextHeaders(String text) {
         this.text = text;
-        this.file = null;
+        //this.file = null;
         logger.debug("Header fields not defined in HTTPAnswer.set_text");
     }
 
