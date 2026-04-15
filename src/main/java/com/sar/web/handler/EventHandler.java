@@ -8,60 +8,71 @@ import com.sar.web.http.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.PrintStream;
 
 /**
- * EventHandler manages Server-Sent Events (SSE) connections for real-time updates.
- *
- * Server-Sent Events Protocol:
- * SSE is a standard for pushing updates from server to client over HTTP. Unlike WebSocket,
- * it's unidirectional (server to client) and uses regular HTTP connections.
- *
- * Required HTTP Response Headers:
- * - Content-Type: text/event-stream
- * - Cache-Control: no-cache
- * - Connection: keep-alive
- *
- * Event Format:
- * Each event consists of one or more lines:
- *   data: <message>\n\n
- *
- * Connection Management:
- * Unlike typical HTTP handlers that send a response and close the connection,
- * SSE connections must remain open indefinitely (or until client disconnects).
- */
+* EventHandler manages Server-Sent Events (SSE) connections for real-time updates.
+* 
+* Server-Sent Events Protocol:
+* SSE is a standard for pushing updates from server to client over HTTP. Unlike WebSocket,
+* it's unidirectional (server → client) and uses regular HTTP connections.
+* 
+* Required HTTP Response Headers:
+* - Content-Type: text/event-stream
+* - Cache-Control: no-cache
+* - Connection: keep-alive (or use chunked transfer encoding)
+* 
+* Event Format:
+* Each event consists of one or more lines:
+*   data: <message>\n\n
+* 
+* For example:
+*   data: {"type": "group.created", "groupNumber": 42}\n\n
+* 
+* Connection Management:
+* Unlike typical HTTP handlers that send a response and close the connection,
+* SSE connections must remain open indefinitely (or until client disconnects).
+* This requires:
+* - Not closing the output stream after initial headers
+* - Keeping the connection alive in a loop or registering it for async events
+* - Detecting client disconnection and cleaning up
+* 
+* Integration with EventBroadcaster:
+* This handler should register the client's output stream with the EventBroadcaster
+* so that when events occur (group created, deleted, etc.), all connected clients
+* receive the updates automatically.
+* 
+* Handler Pattern:
+* Extends AbstractRequestHandler, implementing the template method pattern.
+* The handle() method delegates to handleGet() or handlePost() based on HTTP method.
+*/
 public class EventHandler extends AbstractRequestHandler {
     private static final Logger logger = LoggerFactory.getLogger(EventHandler.class);
 
     private final EventBroadcaster eventBroadcaster;
 
     /**
-     * Constructor with dependency injection.
-     * EventBroadcaster is injected by Main during initialization.
-     *
-     * @param eventBroadcaster the shared event broadcaster service
-     */
+    * Constructor with dependency injection.
+    * EventBroadcaster is injected by Main during initialization.
+    *
+    * @param eventBroadcaster the shared event broadcaster service
+    */
     public EventHandler(EventBroadcaster eventBroadcaster) {
         this.eventBroadcaster = eventBroadcaster;
     }
 
     /**
-     * Handles GET requests to /events endpoint.
-     * Establishes an SSE connection, sends headers, registers the client
-     * with the EventBroadcaster and keeps the connection alive via heartbeats.
-     */
+    * Handles GET requests to /events endpoint.
+    * Establishes an SSE connection, sends headers, registers the client
+    * with the EventBroadcaster and keeps the connection alive via heartbeats.
+    */
     @Override
     protected void handleGet(Request request, Response response) {
-        // Bug fix 1: Must set 200 OK before send_Answer(); otherwise Response
-        // defaults to 400 Bad Request (see Response.send_Answer()).
         response.setCode(ReplyCode.OK);
         response.setHeader("Content-Type", "text/event-stream");
         response.setHeader("Cache-Control", "no-cache");
         response.setHeader("Connection", "keep-alive");
 
-        // Bug fix 2: PrintStream is set by ConnectionThread via response.setPrintStream()
-        // before dispatching to this handler, so getPrintStream() is safe here.
         PrintStream clientStream = response.getPrintStream();
 
         if (clientStream == null) {
@@ -71,8 +82,6 @@ public class EventHandler extends AbstractRequestHandler {
         }
 
         try {
-            // Bug fix 3: mark as fully handled BEFORE sending, so ConnectionThread
-            // does not attempt a second send_Answer() call after this method returns.
             response.setFullyHandled(true);
             response.send_Answer(clientStream);
 
@@ -101,9 +110,9 @@ public class EventHandler extends AbstractRequestHandler {
     }
 
     /**
-     * POST is not supported for SSE.
-     * SSE connections are established via GET requests only.
-     */
+    * POST is not supported for SSE.
+    * SSE connections are established via GET requests only.
+    */
     @Override
     protected void handlePost(Request request, Response response) {
         logger.error("EventHandler does not handle POST requests.");
