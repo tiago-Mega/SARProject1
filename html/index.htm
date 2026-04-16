@@ -245,23 +245,39 @@
       // ========== Group Management ==========
       function loadGroups() {
         $.ajax({
-          url: '/api',
-          method: 'GET',
-          success: function(response) {
-            // Parse HTML response and extract table
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(response, 'text/html');
-            const table = doc.querySelector('table');
-            
-            if (table) {
-              $('#groupsTable').html(table);
-            } else {
-              $('#groupsTable').html('<p>No groups found or unable to parse response.</p>');
+            url: 'api',
+            method: 'GET',
+            dataType: 'json',
+            success: function(groups) {
+                if (!groups || groups.length === 0) {
+                    $('#groupsTable').html('<p>No groups registered yet.</p>');
+                    return;
+                }
+
+                var html = '<table><thead><tr>' +
+                    '<th>Group #</th><th>Member 1 №</th><th>Member 1 Name</th>' +
+                    '<th>Member 2 №</th><th>Member 2 Name</th><th>Last Update</th>' +
+                    '</tr></thead><tbody>';
+
+                $.each(groups, function(i, group) {
+                    var m1 = group.members[0] || {};
+                    var m2 = group.members[1] || {};
+                    html += '<tr>' +
+                        '<td>' + group.groupNumber + '</td>' +
+                        '<td>' + (m1.number || '') + '</td>' +
+                        '<td>' + (m1.name   || '') + '</td>' +
+                        '<td>' + (m2.number || '') + '</td>' +
+                        '<td>' + (m2.name   || '') + '</td>' +
+                        '<td>' + (group.lastUpdate || '') + '</td>' +
+                        '</tr>';
+                });
+
+                html += '</tbody></table>';
+                $('#groupsTable').html(html);
+            },
+            error: function() {
+                $('#groupsTable').html('<p class="error">Failed to load groups.</p>');
             }
-          },
-          error: function() {
-            $('#groupsTable').html('<p class="error">Failed to load groups. Please ensure the API handler is implemented.</p>');
-          }
         });
       }
 

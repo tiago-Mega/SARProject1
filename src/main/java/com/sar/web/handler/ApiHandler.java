@@ -180,8 +180,8 @@ public class ApiHandler extends AbstractRequestHandler {
         logger.debug("DELETE /api - Deleting group");
         
         try {
-            String groupNumber = request.getPostParameters().getProperty("groupNumber");
-
+            String groupNumber = request.getQueryParameter("groupNumber");
+            
             if (groupNumber == null || groupNumber.isEmpty()) {
                 String body = "{\"error\":\"Group number is required for deletion\"}";
                 

@@ -95,6 +95,23 @@ public class Request {
         return postParameters;
     }
     
+    public String getQueryParameter(String name) {
+        if (urlText == null || !urlText.contains("?")) return null;
+        
+        String query = urlText.substring(urlText.indexOf('?') + 1);
+        for (String pair : query.split("&")) {
+            int idx = pair.indexOf('=');
+            if (idx > 0) {
+                try {
+                    String key = java.net.URLDecoder.decode(pair.substring(0, idx), "UTF-8");
+                    String val = java.net.URLDecoder.decode(pair.substring(idx + 1), "UTF-8");
+                    if (key.equals(name)) return val;
+                } catch (Exception e) { /* ignore */ }
+            }
+        }
+        return null;
+    }
+
     /**
     * Remove a header property name
     * @param hdrName   header name

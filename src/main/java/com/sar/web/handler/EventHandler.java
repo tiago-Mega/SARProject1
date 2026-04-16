@@ -68,11 +68,6 @@ public class EventHandler extends AbstractRequestHandler {
     */
     @Override
     protected void handleGet(Request request, Response response) {
-        response.setCode(ReplyCode.OK);
-        response.setHeader("Content-Type", "text/event-stream");
-        response.setHeader("Cache-Control", "no-cache");
-        response.setHeader("Connection", "keep-alive");
-
         PrintStream clientStream = response.getPrintStream();
 
         if (clientStream == null) {
@@ -81,14 +76,22 @@ public class EventHandler extends AbstractRequestHandler {
             return;
         }
 
+        // Write SSE headers MANUALLY — never use send_Answer() for SSE
+        clientStream.print("HTTP/1.1 200 OK\r\n");
+        clientStream.print("Content-Type: text/event-stream\r\n");
+        clientStream.print("Cache-Control: no-cache\r\n");
+        clientStream.print("Connection: keep-alive\r\n");
+        clientStream.print("\r\n"); // blank line = end of headers
+        clientStream.flush();
+
+        // Mark response as fully handled to prevent send_Answer() from being called
+        response.setFullyHandled(true); 
+
+        // Register client AFTER headers are sent so broadcasts go to a ready stream.
+        eventBroadcaster.registerClient(clientStream);
+        logger.info("SSE client registered. Total clients: {}", eventBroadcaster.getClientCount());
+
         try {
-            response.setFullyHandled(true);
-            response.send_Answer(clientStream);
-
-            // Register client AFTER headers are sent so broadcasts go to a ready stream.
-            eventBroadcaster.registerClient(clientStream);
-            logger.info("SSE client registered. Total clients: {}", eventBroadcaster.getClientCount());
-
             // Keep connection open; send a comment heartbeat every 15 s to prevent
             // proxies/browsers from closing an idle connection.
             // SSE comment lines start with ':' and are ignored by the client.
